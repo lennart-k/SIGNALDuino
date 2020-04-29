@@ -5,16 +5,17 @@
 #ifdef ESP8266
 #include <ESP8266WiFi.h>
 #include <ESP8266WebServer.h>     //Local WebServer used to serve the configuration portal
+#include <ESP8266mDNS.h>
 #elif defined(ESP32)
 #include <WiFi.h>
-#include <esp_wifi.h>  
+#include <esp_wifi.h>
+#include <ESPmDNS.h>
 #endif 
 
 #include "ArduinoJson.h"
 #include "WiFiManager.h"          //https://github.com/tzapu/WiFiManager
 
 extern WiFiManager wifiManager;
-
 
 //default custom static IP
 char static_ip[16] = "0.0.0.0";

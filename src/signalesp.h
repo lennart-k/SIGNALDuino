@@ -37,12 +37,14 @@ extern "C" {
 }
 #include <ESP8266WiFi.h>
 #include <ESP8266WebServer.h>     //Local WebServer used to serve the configuration portal
+#include <ESP8266mDNS.h>
 #endif
 #if defined(ESP32)
 #include "esp_timer.h"
 #include "esp_task_wdt.h"
 #include <WiFi.h>
 #include <WiFiType.h>
+#include <ESPmDNS.h>
 #endif
 
 #include <FS.h>   
@@ -125,6 +127,21 @@ void ICACHE_RAM_ATTR sosBlink (void *pArg) {
 }
 
 
+#if defined(ESP32) || defined(ESP8266)
+String getHostname() {
+  byte mac[6];
+  WiFi.macAddress(mac);
+
+  String uniqueId = "signalduino_";
+  uniqueId += String(mac[0], HEX);
+  uniqueId += String(mac[1], HEX);
+  uniqueId += String(mac[2], HEX);
+  uniqueId += String(mac[3], HEX);
+  uniqueId += String(mac[4], HEX);
+  uniqueId += String(mac[5], HEX);
+  return uniqueId.c_str();
+}
+#endif
 
 
 
@@ -140,6 +157,10 @@ void setup() {
 	gotIpEventHandler = WiFi.onStationModeGotIP([](const WiFiEventStationModeGotIP& event)
 	{
 		//Server.stop();
+		if (MDNS.begin(getHostname())) {
+			Serial.println("MDNS responder started");
+			MDNS.addService("signalduino", "tcp", 23);
+		}
 		Server.begin();  // start telnet server
 		Server.setNoDelay(true);
 	});
@@ -473,6 +494,9 @@ void ICACHE_RAM_ATTR cronjob(void *pArg) {
 void loop() {
 
 	wifiManager.process();
+	#if defined(ESP8266) || defined(ESP32)
+	MDNS.update();
+	#endif
 	
 	static int aktVal = 0;
 	bool state;
